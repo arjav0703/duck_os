@@ -4,7 +4,6 @@
 mod vga;
 use vga::Writer;
 
-use core::fmt::Write;
 use lazy_static::lazy_static;
 use spin::Mutex;
 
@@ -14,17 +13,17 @@ lazy_static! {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    let mut w = WRITER.lock();
+    println!("Welcome to DuckOS!\n");
+    println!("<3");
 
-    write!(w, "Welcome to DuckOS!\n");
-    write!(w, "<3");
-
+    panic!("The duck is dead :(");
     loop {}
 }
 
 use core::panic::PanicInfo;
 
 #[panic_handler]
-fn panic(_: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("Panic: {}", info);
     loop {}
 }
