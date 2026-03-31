@@ -4,11 +4,13 @@
 mod vga;
 use vga::Writer;
 
+use core::fmt::Write;
+
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
     let mut writer = Writer::default();
-    writer.write_string("Hello, Duck OS!\n");
-    writer.write_string("VGA is working!");
+    write!(writer, "Welcome to DuckOS!\n").unwrap();
+    write!(writer, "<3").unwrap();
 
     loop {}
 }

@@ -1,3 +1,5 @@
+use volatile::Volatile;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 #[allow(dead_code)]
@@ -60,7 +62,7 @@ const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
-    chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 pub struct Writer {
@@ -91,10 +93,11 @@ impl Writer {
                 let row = self.row_position;
                 let col = self.column_position;
 
-                self.buffer.chars[row][col] = ScreenChar {
+                self.buffer.chars[row][col].write(ScreenChar {
                     ascii_character: byte,
                     attributes: self.color_code.to_byte(),
-                };
+                });
+
                 self.column_position += 1;
             }
         }
@@ -114,13 +117,20 @@ impl Writer {
     pub fn clear_screen(&mut self) {
         for row in 0..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
-                self.buffer.chars[row][col] = ScreenChar {
+                self.buffer.chars[row][col].write(ScreenChar {
                     ascii_character: b' ',
                     attributes: self.color_code.to_byte(),
-                };
+                });
             }
         }
         self.column_position = 0;
         self.row_position = 0;
+    }
+}
+
+impl core::fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        self.write_string(s);
+        Ok(())
     }
 }
