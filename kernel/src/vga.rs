@@ -28,19 +28,11 @@ pub struct VgaAttribute {
 }
 
 impl VgaAttribute {
-    pub fn new(foreground: Color, background: Color, blink: bool) -> Self {
-        Self {
-            foreground,
-            background,
-            blink,
-        }
-    }
-
     pub fn to_byte(self) -> u8 {
         let mut attr = (self.foreground as u8) & 0x0F; // Bits 0-3
         attr |= ((self.background as u8) & 0x07) << 4; // Bits 4-6
         if self.blink {
-            attr |= 0x80; // bit 7 
+            attr |= 0x80; // bit 7
         }
         attr
     }
@@ -56,15 +48,79 @@ impl Default for VgaAttribute {
     }
 }
 
-pub fn render_string(str: &str, attr: VgaAttribute) {
-    let buf = 0xb8000 as *mut u8;
-    let s = str.as_bytes();
-    let attr_byte = attr.to_byte();
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+struct ScreenChar {
+    ascii_character: u8,
+    attributes: u8,
+}
 
-    for (i, &byte) in s.iter().enumerate() {
-        unsafe {
-            *buf.add(i * 2) = byte; // Character
-            *buf.add(i * 2 + 1) = attr_byte; // Attribute with blinking support
+const BUFFER_HEIGHT: usize = 25;
+const BUFFER_WIDTH: usize = 80;
+
+#[repr(transparent)]
+struct Buffer {
+    chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
+}
+
+pub struct Writer {
+    column_position: usize,
+    row_position: usize,
+    color_code: VgaAttribute,
+    buffer: &'static mut Buffer,
+}
+
+impl Writer {
+    pub fn default() -> Self {
+        Self {
+            column_position: 0,
+            row_position: 0,
+            color_code: VgaAttribute::default(),
+            buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
         }
+    }
+
+    pub fn write_byte(&mut self, byte: u8) {
+        match byte {
+            b'\n' => self.new_line(),
+            byte => {
+                if self.column_position >= BUFFER_WIDTH {
+                    self.new_line();
+                }
+
+                let row = self.row_position;
+                let col = self.column_position;
+
+                self.buffer.chars[row][col] = ScreenChar {
+                    ascii_character: byte,
+                    attributes: self.color_code.to_byte(),
+                };
+                self.column_position += 1;
+            }
+        }
+    }
+
+    pub fn new_line(&mut self) {
+        self.column_position = 0;
+        self.row_position += 1;
+    }
+
+    pub fn write_string(&mut self, s: &str) {
+        for byte in s.bytes() {
+            self.write_byte(byte);
+        }
+    }
+
+    pub fn clear_screen(&mut self) {
+        for row in 0..BUFFER_HEIGHT {
+            for col in 0..BUFFER_WIDTH {
+                self.buffer.chars[row][col] = ScreenChar {
+                    ascii_character: b' ',
+                    attributes: self.color_code.to_byte(),
+                };
+            }
+        }
+        self.column_position = 0;
+        self.row_position = 0;
     }
 }
