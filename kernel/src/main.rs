@@ -1,5 +1,8 @@
 #![no_std]
 #![no_main]
+#![feature(custom_test_frameworks)]
+#![test_runner(crate::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
 mod vga;
 use vga::Writer;
@@ -16,7 +19,11 @@ pub extern "C" fn _start() -> ! {
     println!("Welcome to DuckOS!\n");
     println!("<3");
 
-    panic!("The duck is dead :(");
+    #[cfg(test)]
+    test_main();
+
+    // panic!("The duck is dead :(");
+
     loop {}
 }
 
@@ -26,4 +33,20 @@ use core::panic::PanicInfo;
 fn panic(info: &PanicInfo) -> ! {
     println!("Panic: {}", info);
     loop {}
+}
+
+#[cfg(test)]
+pub fn test_runner(tests: &[&dyn Fn()]) {
+    println!("Running {} tests", tests.len());
+    for test in tests {
+        test();
+    }
+}
+
+#[test_case]
+fn assertion() {
+    print!("assertion... ");
+    let one = 1;
+    assert_eq!(1, one);
+    println!("assertion [ok]");
 }

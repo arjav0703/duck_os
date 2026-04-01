@@ -17,6 +17,6 @@ panic = "abort"
 
 [[bin]]
 name = "kernel"
-test = false
+test = true
 bench = false
 
