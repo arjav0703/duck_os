@@ -6,6 +6,8 @@
 
 mod vga;
 use vga::Writer;
+mod exit;
+use exit::{QemuExitCode, exit_qemu};
 
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -16,7 +18,7 @@ lazy_static! {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    println!("Welcome to DuckOS!\n");
+    println!("Welcome to DuckOS!");
     println!("<3");
 
     #[cfg(test)]
@@ -41,6 +43,7 @@ pub fn test_runner(tests: &[&dyn Fn()]) {
     for test in tests {
         test();
     }
+    exit_qemu(QemuExitCode::Success);
 }
 
 #[test_case]
