@@ -7,6 +7,7 @@
 mod vga;
 use vga::Writer;
 mod exit;
+mod serial_port;
 use exit::{QemuExitCode, exit_qemu};
 
 use lazy_static::lazy_static;
@@ -48,8 +49,8 @@ pub fn test_runner(tests: &[&dyn Fn()]) {
 
 #[test_case]
 fn assertion() {
-    print!("assertion... ");
+    serial_println!("assertion..");
     let one = 1;
     assert_eq!(1, one);
-    println!("assertion [ok]");
+    serial_println!("assertion [ok]");
 }
