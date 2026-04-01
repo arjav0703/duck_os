@@ -7,6 +7,7 @@
 mod vga;
 use vga::Writer;
 mod exit;
+mod panic;
 mod serial_port;
 use exit::{QemuExitCode, exit_qemu};
 
@@ -27,14 +28,6 @@ pub extern "C" fn _start() -> ! {
 
     // panic!("The duck is dead :(");
 
-    loop {}
-}
-
-use core::panic::PanicInfo;
-
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    println!("Panic: {}", info);
     loop {}
 }
 
