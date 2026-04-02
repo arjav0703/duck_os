@@ -39,11 +39,3 @@ pub fn test_runner(tests: &[&dyn Fn()]) {
     }
     exit_qemu(QemuExitCode::Success);
 }
-
-#[test_case]
-fn assertion() {
-    serial_println!("assertion..");
-    let one = 1;
-    assert_eq!(1, one);
-    serial_println!("assertion [ok]");
-}
