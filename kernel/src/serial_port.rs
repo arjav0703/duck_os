@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 use spin::Mutex;
 use uart_16550::SerialPort;
+use x86_64::instructions::interrupts;
 
 lazy_static! {
     pub static ref SERIALPORT: Mutex<SerialPort> = {
@@ -13,6 +14,14 @@ lazy_static! {
 #[doc(hidden)]
 pub fn _print(args: ::core::fmt::Arguments) {
     use core::fmt::Write;
+
+    interrupts::without_interrupts(|| {
+        SERIALPORT
+            .lock()
+            .write_fmt(args)
+            .expect("Printing to serial failed");
+    });
+
     SERIALPORT
         .lock()
         .write_fmt(args)

@@ -154,10 +154,16 @@ macro_rules! println {
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
 
+use x86_64::instructions::interrupts;
+
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use crate::WRITER;
     use core::fmt::Write;
 
-    WRITER.lock().write_fmt(args).unwrap();
+    // WRITER.lock().write_fmt(args).unwrap();
+
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
+    });
 }

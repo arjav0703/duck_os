@@ -34,7 +34,9 @@ pub extern "C" fn _start() -> ! {
 
     // panic!("The duck is dead :(");
     println!("we're good :p");
-    loop {}
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 #[cfg(test)]
