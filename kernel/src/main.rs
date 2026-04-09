@@ -11,7 +11,7 @@ mod exit;
 mod panic;
 mod serial_port;
 use exit::{QemuExitCode, exit_qemu};
-mod cpu_exceptions;
+mod interrupts;
 
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -25,7 +25,7 @@ pub extern "C" fn _start() -> ! {
     println!("Welcome to DuckOS!");
     println!("<3");
 
-    cpu_exceptions::init_idt();
+    interrupts::init_idt();
 
     // x86_64::instructions::interrupts::int3();
 
