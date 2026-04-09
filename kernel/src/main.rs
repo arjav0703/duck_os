@@ -5,8 +5,8 @@
 #![reexport_test_harness_main = "test_main"]
 #![feature(abi_x86_interrupt)]
 
-mod vga;
-use vga::Writer;
+mod display;
+use display::writer::Writer;
 mod exit;
 mod panic;
 mod serial_port;
