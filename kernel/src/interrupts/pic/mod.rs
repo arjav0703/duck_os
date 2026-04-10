@@ -33,3 +33,28 @@ pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptSta
             .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test_case]
+    fn test_timer_interrupt_index_as_u8() {
+        assert_eq!(InterruptIndex::Timer.as_u8(), 32);
+    }
+
+    #[test_case]
+    fn test_keyboard_interrupt_index_as_u8() {
+        assert_eq!(InterruptIndex::Keyboard.as_u8(), 33);
+    }
+
+    #[test_case]
+    fn test_timer_interrupt_index_as_usize() {
+        assert_eq!(InterruptIndex::Timer.as_usize(), 32);
+    }
+
+    #[test_case]
+    fn test_keyboard_interrupt_index_as_usize() {
+        assert_eq!(InterruptIndex::Keyboard.as_usize(), 33);
+    }
+}

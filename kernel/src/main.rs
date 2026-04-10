@@ -47,3 +47,20 @@ pub fn test_runner(tests: &[&dyn Fn()]) {
     }
     exit_qemu(QemuExitCode::Success);
 }
+
+#[test_case]
+fn test_println_simple() {
+    println!("test_println_simple output");
+}
+
+#[test_case]
+fn test_println_many_lines() {
+    for _ in 0..50 {
+        println!("test_println_many_lines output");
+    }
+}
+
+#[test_case]
+fn test_println_formatting() {
+    println!("number: {}, string: {}, bool: {}", 42, "hello", true);
+}

@@ -78,3 +78,87 @@ impl core::fmt::Write for Writer {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test_case]
+    fn test_write_byte_increments_column() {
+        let mut writer = Writer::default();
+        writer.write_byte(b'A');
+        assert_eq!(writer.column_position, 1);
+    }
+
+    #[test_case]
+    fn test_newline_resets_column_and_increments_row() {
+        let mut writer = Writer::default();
+        writer.write_byte(b'A');
+        writer.write_byte(b'\n');
+        assert_eq!(writer.column_position, 0);
+        assert_eq!(writer.row_position, 1);
+    }
+
+    #[test_case]
+    fn test_write_string_increments_column() {
+        let mut writer = Writer::default();
+        writer.write_string("hello");
+        assert_eq!(writer.column_position, 5);
+    }
+
+    #[test_case]
+    fn test_write_string_with_newline_advances_row() {
+        let mut writer = Writer::default();
+        writer.write_string("hi\nthere");
+        assert_eq!(writer.row_position, 1);
+        assert_eq!(writer.column_position, 5);
+    }
+
+    #[test_case]
+    fn test_clear_screen_resets_position() {
+        let mut writer = Writer::default();
+        writer.write_string("hello");
+        writer.write_byte(b'\n');
+        writer.clear_screen();
+        assert_eq!(writer.column_position, 0);
+        assert_eq!(writer.row_position, 0);
+    }
+
+    #[test_case]
+    fn test_write_byte_wraps_at_buffer_width() {
+        let mut writer = Writer::default();
+        for _ in 0..BUFFER_WIDTH {
+            writer.write_byte(b'x');
+        }
+        assert_eq!(writer.column_position, BUFFER_WIDTH);
+        writer.write_byte(b'y');
+        // new_line was triggered: column reset to 0, row advanced, then 'y' written
+        assert_eq!(writer.column_position, 1);
+        assert_eq!(writer.row_position, 1);
+    }
+
+    #[test_case]
+    fn test_write_byte_stores_correct_character() {
+        let mut writer = Writer::default();
+        writer.write_byte(b'X');
+        let written = writer.buffer.chars[0][0].read();
+        assert_eq!(written.ascii_character, b'X');
+    }
+
+    #[test_case]
+    fn test_clear_screen_fills_with_spaces() {
+        let mut writer = Writer::default();
+        writer.write_byte(b'Z');
+        writer.clear_screen();
+        let written = writer.buffer.chars[0][0].read();
+        assert_eq!(written.ascii_character, b' ');
+    }
+
+    #[test_case]
+    fn test_write_byte_stores_correct_color_attribute() {
+        let mut writer = Writer::default();
+        writer.write_byte(b'A');
+        let written = writer.buffer.chars[0][0].read();
+        assert_eq!(written.attributes, writer.color_code.to_byte());
+    }
+}

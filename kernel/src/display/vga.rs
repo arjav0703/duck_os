@@ -54,3 +54,67 @@ pub struct ScreenChar {
     pub ascii_character: u8,
     pub attributes: u8,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test_case]
+    fn test_vga_attribute_default_to_byte() {
+        let attr = VgaAttribute::default();
+        // Default: Pink (13) foreground, Black (0) background, no blink
+        // bits 0-3: 13 = 0x0D, bits 4-6: 0, bit 7: 0
+        assert_eq!(attr.to_byte(), 0x0D);
+    }
+
+    #[test_case]
+    fn test_vga_attribute_foreground_masked_to_nibble() {
+        let attr = VgaAttribute {
+            foreground: Color::White, // 15 = 0x0F
+            background: Color::Black,
+            blink: false,
+        };
+        assert_eq!(attr.to_byte(), 0x0F);
+    }
+
+    #[test_case]
+    fn test_vga_attribute_background_shifted_to_bits_4_to_6() {
+        let attr = VgaAttribute {
+            foreground: Color::Black,
+            background: Color::Green, // 2 -> bits 4-6: 0x20
+            blink: false,
+        };
+        assert_eq!(attr.to_byte(), 0x20);
+    }
+
+    #[test_case]
+    fn test_vga_attribute_blink_sets_bit7() {
+        let attr = VgaAttribute {
+            foreground: Color::Black,
+            background: Color::Black,
+            blink: true,
+        };
+        assert_eq!(attr.to_byte(), 0x80);
+    }
+
+    #[test_case]
+    fn test_vga_attribute_all_fields_combined() {
+        let attr = VgaAttribute {
+            foreground: Color::White, // 15 = 0x0F
+            background: Color::Green, // 2 -> 0x20
+            blink: true,              // 0x80
+        };
+        assert_eq!(attr.to_byte(), 0x0F | 0x20 | 0x80); // 0xAF
+    }
+
+    #[test_case]
+    fn test_vga_attribute_background_masked_to_3_bits() {
+        // White (15) background: 15 & 0x07 = 7 -> bits 4-6: 0x70
+        let attr = VgaAttribute {
+            foreground: Color::Black,
+            background: Color::White,
+            blink: false,
+        };
+        assert_eq!(attr.to_byte(), 0x70);
+    }
+}
