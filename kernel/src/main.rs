@@ -6,6 +6,7 @@
 #![feature(abi_x86_interrupt)]
 
 mod display;
+use bootloader::{BootInfo, entry_point};
 use display::writer::Writer;
 mod exit;
 mod panic;
@@ -20,8 +21,8 @@ lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer::default());
 }
 
-#[unsafe(no_mangle)]
-pub extern "C" fn _start() -> ! {
+entry_point!(start);
+pub fn start(boot_info: &'static BootInfo) -> ! {
     println!("Welcome to DuckOS!");
     println!("<3");
 
