@@ -37,19 +37,19 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     let offset_table =
         unsafe { OffsetPageTable::new(l4_table, VirtAddr::new(boot_info.physical_memory_offset)) };
 
-    let addresses = [
-        //vga buffer page
-        0xb8000,
-        // some code page
-        0x201008,
-        boot_info.physical_memory_offset,
-    ];
-
-    for &address in &addresses {
-        let virt_addr = VirtAddr::new(address);
-        let phys_addr = offset_table.translate_addr(virt_addr);
-        println!("virtual: {:#x} -> physical: {:?}", virt_addr, phys_addr);
-    }
+    // let addresses = [
+    //     //vga buffer page
+    //     0xb8000,
+    //     // some code page
+    //     0x201008,
+    //     boot_info.physical_memory_offset,
+    // ];
+    //
+    // for &address in &addresses {
+    //     let virt_addr = VirtAddr::new(address);
+    //     let phys_addr = offset_table.translate_addr(virt_addr);
+    //     println!("virtual: {:#x} -> physical: {:?}", virt_addr, phys_addr);
+    // }
     // for (i, entry) in l4_table.iter().enumerate() {
     //     if !entry.is_unused() {
     //         println!("L4 Entry {}: {:?}", i, entry);
@@ -68,6 +68,7 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     // }
     //
     // x86_64::instructions::interrupts::int3();
+    let mut frame_allocator = unsafe { memory::BootInfoFrameAllocator::new(&boot_info.memory_map) };
 
     #[cfg(test)]
     test_main();
