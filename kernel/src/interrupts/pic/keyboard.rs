@@ -1,5 +1,6 @@
 use super::InterruptIndex;
 use crate::print;
+use crate::shell::SHELL;
 use lazy_static::lazy_static;
 use pc_keyboard::{DecodedKey, HandleControl, Keyboard, ScancodeSet1, layouts};
 use spin::Mutex;
@@ -24,8 +25,8 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: Interrupt
         && let Some(key) = keyboard.process_keyevent(key_event)
     {
         match key {
-            DecodedKey::Unicode(character) => print!("{}", character),
-            DecodedKey::RawKey(key) => print!("{:?}", key),
+            DecodedKey::Unicode(character) => SHELL.lock().input(character as u8),
+            DecodedKey::RawKey(key) => print!("raw key: {:?}", key),
         }
     }
 

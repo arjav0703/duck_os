@@ -14,6 +14,7 @@ mod panic;
 mod serial_port;
 use exit::{QemuExitCode, exit_qemu};
 mod interrupts;
+mod shell;
 
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -32,6 +33,7 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     println!("<3");
 
     interrupts::init_idt();
+    shell::SHELL.lock().prompt();
 
     let l4_table = memory::fetch_l4_table(VirtAddr::new(boot_info.physical_memory_offset));
     let offset_table =
@@ -68,13 +70,12 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     // }
     //
     // x86_64::instructions::interrupts::int3();
-    let mut frame_allocator = unsafe { memory::BootInfoFrameAllocator::new(&boot_info.memory_map) };
 
     #[cfg(test)]
     test_main();
 
     // panic!("The duck is dead :(");
-    println!("we're good :p");
+    // println!("we're good :p");
     loop {
         x86_64::instructions::hlt();
     }
