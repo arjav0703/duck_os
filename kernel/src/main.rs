@@ -5,6 +5,8 @@
 #![reexport_test_harness_main = "test_main"]
 #![feature(abi_x86_interrupt)]
 
+extern crate alloc;
+
 mod display;
 use bootloader::{BootInfo, entry_point};
 use display::writer::Writer;
