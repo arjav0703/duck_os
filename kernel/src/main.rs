@@ -40,52 +40,12 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     interrupts::init_idt();
     shell::SHELL.lock().prompt();
 
-    let l4_table = memory::fetch_l4_table(VirtAddr::new(boot_info.physical_memory_offset));
-    let offset_table =
-        unsafe { OffsetPageTable::new(l4_table, VirtAddr::new(boot_info.physical_memory_offset)) };
-
-    // let addresses = [
-    //     //vga buffer page
-    //     0xb8000,
-    //     // some code page
-    //     0x201008,
-    //     boot_info.physical_memory_offset,
-    // ];
-    //
-    // for &address in &addresses {
-    //     let virt_addr = VirtAddr::new(address);
-    //     let phys_addr = offset_table.translate_addr(virt_addr);
-    //     println!("virtual: {:#x} -> physical: {:?}", virt_addr, phys_addr);
-    // }
-    // for (i, entry) in l4_table.iter().enumerate() {
-    //     if !entry.is_unused() {
-    //         println!("L4 Entry {}: {:?}", i, entry);
-    //
-    //         let l3_table = memory::fetch_next_table(
-    //             VirtAddr::new(boot_info.physical_memory_offset),
-    //             entry.frame().unwrap(),
-    //         );
-    //
-    //         for (j, entry) in l3_table.iter().enumerate() {
-    //             if !entry.is_unused() {
-    //                 println!("L3 Entry {}: {:?}", j, entry);
-    //             }
-    //         }
-    //     }
-    // }
-    //
-    // x86_64::instructions::interrupts::int3();
-    //
-    let mut mapper = unsafe {
-        OffsetPageTable::new(
-            memory::fetch_l4_table(VirtAddr::new(boot_info.physical_memory_offset)),
-            VirtAddr::new(boot_info.physical_memory_offset),
-        )
-    };
+    let mut mapper = unsafe { memory::init(VirtAddr::new(boot_info.physical_memory_offset)) };
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::new(&boot_info.memory_map) };
 
-    memory::init_heap(&mut mapper, &mut frame_allocator);
+    memory::heap::init_heap(&mut mapper, &mut frame_allocator).unwrap();
     let x = Box::new(50);
+    println!("heap value at {:p} is {}", x, x);
 
     #[cfg(test)]
     test_main();

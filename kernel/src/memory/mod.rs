@@ -1,11 +1,18 @@
-pub mod allocator;
+pub mod heap;
 
 use bootloader::bootinfo::{MemoryMap, MemoryRegionType};
 use x86_64::{
     PhysAddr, VirtAddr,
     registers::control::Cr3,
-    structures::paging::{FrameAllocator, PageTable, PhysFrame, Size4KiB},
+    structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB},
 };
+
+pub unsafe fn init(physical_memory_offset: VirtAddr) -> OffsetPageTable<'static> {
+    unsafe {
+        let level_4_table = fetch_l4_table(physical_memory_offset);
+        OffsetPageTable::new(level_4_table, physical_memory_offset)
+    }
+}
 
 pub fn fetch_next_table(
     phy_mem_offset: VirtAddr,
@@ -51,31 +58,4 @@ unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
         self.next += 1;
         frame
     }
-}
-
-use x86_64::structures::paging::{Mapper, Page, PageTableFlags, mapper::MapToError};
-
-pub const HEAP_START: usize = 0x_4444_4444_0000;
-pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
-
-pub fn init_heap(
-    mapper: &mut impl Mapper<Size4KiB>,
-    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-) -> Result<(), MapToError<Size4KiB>> {
-    let heap_start = VirtAddr::new(HEAP_START as u64);
-    let heap_end = heap_start + HEAP_SIZE - 1u64;
-    let heap_start_page = Page::containing_address(VirtAddr::new(HEAP_START as u64));
-    let heap_end_page = Page::containing_address(heap_end);
-
-    let page_rng = Page::range_inclusive(heap_start_page, heap_end_page);
-
-    for page in page_rng {
-        let frame = frame_allocator
-            .allocate_frame()
-            .ok_or(MapToError::FrameAllocationFailed)?;
-        let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
-        unsafe { mapper.map_to(page, frame, flags, frame_allocator)?.flush() };
-    }
-
-    Ok(())
 }
