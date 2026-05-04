@@ -8,6 +8,7 @@
 extern crate alloc;
 
 mod display;
+use alloc::boxed::Box;
 use bootloader::{BootInfo, entry_point};
 use display::writer::Writer;
 mod exit;
@@ -24,6 +25,8 @@ use x86_64::{
     VirtAddr,
     structures::paging::{OffsetPageTable, Translate},
 };
+
+use crate::memory::BootInfoFrameAllocator;
 
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer::default());
@@ -72,6 +75,17 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     // }
     //
     // x86_64::instructions::interrupts::int3();
+    //
+    let mut mapper = unsafe {
+        OffsetPageTable::new(
+            memory::fetch_l4_table(VirtAddr::new(boot_info.physical_memory_offset)),
+            VirtAddr::new(boot_info.physical_memory_offset),
+        )
+    };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::new(&boot_info.memory_map) };
+
+    memory::init_heap(&mut mapper, &mut frame_allocator);
+    let x = Box::new(50);
 
     #[cfg(test)]
     test_main();
