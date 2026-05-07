@@ -27,3 +27,6 @@ To test the Duck OS kernel, you can use QEMU, a popular open-source emulator. Fo
 ```bash
 qemu-system-x86_64 -drive format=raw,file=bootimage-kernel.bin -serial stdio
 ```
+
+### AI Declaration
+Throughout the development of the project, I had tab completions turned on in my code editor (neovim btw :P). Occasionally used opencode to debug (some parts of the memory management section).
