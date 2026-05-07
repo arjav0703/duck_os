@@ -43,7 +43,7 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     let mut mapper = unsafe { memory::init(VirtAddr::new(boot_info.physical_memory_offset)) };
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::new(&boot_info.memory_map) };
 
-    // memory::heap::init_heap(&mut mapper, &mut frame_allocator).unwrap();
+    memory::heap::init_heap(&mut mapper, &mut frame_allocator).unwrap();
     // let x = Box::new(50);
     // println!("heap value at {:p} is {}", x, x);
 
