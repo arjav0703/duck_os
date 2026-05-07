@@ -13,6 +13,9 @@ An Operating System Kernel written in Rust (x86_64 architecture).
 - Basic Shell (work in progress)
 
 
+https://github.com/user-attachments/assets/7854a5e0-3fd9-4c16-b749-79e4fe84a153
+
+
 ## Testing (For reviewers)
 
 To test the Duck OS kernel, you can use QEMU, a popular open-source emulator. Follow these steps:
