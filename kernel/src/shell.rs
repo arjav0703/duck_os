@@ -34,8 +34,19 @@ impl Shell {
                 // Backspace pressed
                 if self.pos > 0 {
                     self.pos -= 1;
+                    for i in self.pos..INPUT_BUFFER_SIZE - 1 {
+                        self.buffer[i] = self.buffer[i + 1];
+                    }
+
+                    self.buffer[INPUT_BUFFER_SIZE - 1] = 0;
                     let mut writer = WRITER.lock();
-                    write!(writer, "\u{8} \u{8}").unwrap(); // Erase char on screen (BS SP BS)
+
+                    write!(writer, "\nduckos> ").unwrap();
+                    for i in 0..self.pos {
+                        if self.buffer[i] != 0 {
+                            writer.write_char(self.buffer[i] as char).unwrap();
+                        }
+                    }
                 }
             }
             b => {
