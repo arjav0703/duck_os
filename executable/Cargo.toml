@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+kernel = { path = "../kernel" }
+x86_64 = "0.14.2"
+
 
 [profile.dev]
 panic = "abort"
