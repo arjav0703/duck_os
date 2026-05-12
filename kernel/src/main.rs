@@ -1,38 +1,17 @@
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
-#![test_runner(crate::test_runner)]
+#![test_runner(kernel::test_runner)]
 #![reexport_test_harness_main = "test_main"]
-#![feature(abi_x86_interrupt)]
 
 extern crate alloc;
 
-mod display;
-use alloc::boxed::Box;
 use bootloader::{BootInfo, entry_point};
-use display::writer::Writer;
-mod exit;
-mod exec;
-mod fs;
-mod memory;
-mod panic;
-mod serial_port;
-use exit::{QemuExitCode, exit_qemu};
-mod interrupts;
-mod shell;
+use x86_64::VirtAddr;
 
-use lazy_static::lazy_static;
-use spin::Mutex;
-use x86_64::{
-    VirtAddr,
-    structures::paging::{OffsetPageTable, Translate},
-};
+use kernel::*;
 
 use crate::memory::BootInfoFrameAllocator;
-
-lazy_static! {
-    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer::default());
-}
 
 entry_point!(start);
 pub fn start(boot_info: &'static BootInfo) -> ! {
@@ -57,13 +36,4 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     loop {
         x86_64::instructions::hlt();
     }
-}
-
-#[cfg(test)]
-pub fn test_runner(tests: &[&dyn Fn()]) {
-    println!("Running {} tests", tests.len());
-    for test in tests {
-        test();
-    }
-    exit_qemu(QemuExitCode::Success);
 }

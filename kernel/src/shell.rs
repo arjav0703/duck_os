@@ -1,4 +1,5 @@
-use crate::{WRITER, exec, fs};
+use crate::WRITER;
+use crate::{exec, fs};
 use alloc::{string::String, vec::Vec};
 use core::fmt::Write;
 use spin::Mutex;
@@ -74,7 +75,11 @@ impl Shell {
         writeln!(writer, "").ok(); // new line after command entry
         match parse_command(input) {
             Command::Help => {
-                writeln!(writer, "Built-in commands: help, clear, ls, cat, write, rm, exec").ok();
+                writeln!(
+                    writer,
+                    "Built-in commands: help, clear, ls, cat, write, rm, exec"
+                )
+                .ok();
             }
             Command::Clear => {
                 writer.clear_screen();
@@ -89,34 +94,34 @@ impl Shell {
                     }
                 }
             }
-            Command::Cat { name } => match fs::read(&name) {
+            Command::Cat { name } => match fs::read(name.as_str()) {
                 Some(data) => {
                     for &b in data.iter() {
                         if b == b'\n' {
-                            writeln!(writer, "").ok();
+                            writeln!(writer).ok();
                         } else {
                             writer.write_char(b as char).ok();
                         }
                     }
-                    writeln!(writer, "").ok();
+                    writeln!(writer).ok();
                 }
                 None => {
                     writeln!(writer, "file not found: {}", name).ok();
                 }
             },
             Command::Write { name, data } => {
-                fs::write(&name, data.as_bytes());
+                fs::write(name.as_str(), data.as_bytes());
                 writeln!(writer, "ok").ok();
             }
             Command::Rm { name } => {
-                if fs::delete(&name) {
+                if fs::delete(name.as_str()) {
                     writeln!(writer, "ok").ok();
                 } else {
                     writeln!(writer, "file not found: {}", name).ok();
                 }
             }
-            Command::Exec { name } => match fs::read(&name) {
-                Some(data) => match exec::parse_elf(&data) {
+            Command::Exec { name } => match fs::read(name.as_str()) {
+                Some(data) => match exec::parse_elf(&data.to_vec()) {
                     Ok(info) => {
                         writeln!(writer, "ELF64 x86_64").ok();
                         writeln!(writer, "entry: 0x{:x}", info.entry).ok();
@@ -125,12 +130,9 @@ impl Shell {
                             writeln!(
                                 writer,
                                 "[{}] vaddr=0x{:x} filesz={} memsz={} flags=0x{:x}",
-                                idx,
-                                seg.vaddr,
-                                seg.filesz,
-                                seg.memsz,
-                                seg.flags
-                            ).ok();
+                                idx, seg.vaddr, seg.filesz, seg.memsz, seg.flags
+                            )
+                            .ok();
                         }
                     }
                     Err(err) => {

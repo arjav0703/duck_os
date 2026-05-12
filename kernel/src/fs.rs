@@ -18,7 +18,7 @@ impl RamFs {
     }
 
     pub fn read(&self, name: &str) -> Option<Vec<u8>> {
-        self.files.get(name).map(|data| data.clone())
+        self.files.get(name).cloned()
     }
 
     pub fn delete(&mut self, name: &str) -> bool {
@@ -35,9 +35,15 @@ lazy_static! {
 }
 
 pub fn init() {
-    RAM_FS
-        .lock()
-        .write("readme.txt", b"duckos ramfs: write <name> <data>, ls, cat, exec");
+    RAM_FS.lock().write(
+        "readme.txt",
+        b"duckos ramfs: write <name> <data>, ls, cat, exec",
+    );
+
+    RAM_FS.lock().write(
+        "executable",
+        include_bytes!("../../target/x86_64-duck_os/release/executable"),
+    )
 }
 
 pub fn write(name: &str, data: &[u8]) {
