@@ -12,6 +12,8 @@ use alloc::boxed::Box;
 use bootloader::{BootInfo, entry_point};
 use display::writer::Writer;
 mod exit;
+mod exec;
+mod fs;
 mod memory;
 mod panic;
 mod serial_port;
@@ -37,13 +39,13 @@ pub fn start(boot_info: &'static BootInfo) -> ! {
     println!("Welcome to DuckOS!");
     println!("<3");
 
-    interrupts::init_idt();
-    shell::SHELL.lock().prompt();
-
     let mut mapper = unsafe { memory::init(VirtAddr::new(boot_info.physical_memory_offset)) };
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::new(&boot_info.memory_map) };
 
     memory::heap::init_heap(&mut mapper, &mut frame_allocator).unwrap();
+    fs::init();
+    interrupts::init_idt();
+    shell::SHELL.lock().prompt();
     // let x = Box::new(50);
     // println!("heap value at {:p} is {}", x, x);
 

@@ -1,4 +1,5 @@
-use crate::WRITER;
+use crate::{WRITER, exec, fs};
+use alloc::{string::String, vec::Vec};
 use core::fmt::Write;
 use spin::Mutex;
 
@@ -71,19 +72,146 @@ impl Shell {
             .trim();
         let mut writer = WRITER.lock();
         writeln!(writer, "").ok(); // new line after command entry
-        match input {
-            "help" => {
-                writeln!(writer, "Built-in commands: help, clear").ok();
+        match parse_command(input) {
+            Command::Help => {
+                writeln!(writer, "Built-in commands: help, clear, ls, cat, write, rm, exec").ok();
             }
-            "clear" => {
+            Command::Clear => {
                 writer.clear_screen();
             }
-            "" => {}
-            cmd => {
+            Command::Ls => {
+                let entries = fs::list();
+                if entries.is_empty() {
+                    writeln!(writer, "(empty)").ok();
+                } else {
+                    for name in entries {
+                        writeln!(writer, "{}", name).ok();
+                    }
+                }
+            }
+            Command::Cat { name } => match fs::read(&name) {
+                Some(data) => {
+                    for &b in data.iter() {
+                        if b == b'\n' {
+                            writeln!(writer, "").ok();
+                        } else {
+                            writer.write_char(b as char).ok();
+                        }
+                    }
+                    writeln!(writer, "").ok();
+                }
+                None => {
+                    writeln!(writer, "file not found: {}", name).ok();
+                }
+            },
+            Command::Write { name, data } => {
+                fs::write(&name, data.as_bytes());
+                writeln!(writer, "ok").ok();
+            }
+            Command::Rm { name } => {
+                if fs::delete(&name) {
+                    writeln!(writer, "ok").ok();
+                } else {
+                    writeln!(writer, "file not found: {}", name).ok();
+                }
+            }
+            Command::Exec { name } => match fs::read(&name) {
+                Some(data) => match exec::parse_elf(&data) {
+                    Ok(info) => {
+                        writeln!(writer, "ELF64 x86_64").ok();
+                        writeln!(writer, "entry: 0x{:x}", info.entry).ok();
+                        writeln!(writer, "segments: {}", info.segments.len()).ok();
+                        for (idx, seg) in info.segments.iter().enumerate() {
+                            writeln!(
+                                writer,
+                                "[{}] vaddr=0x{:x} filesz={} memsz={} flags=0x{:x}",
+                                idx,
+                                seg.vaddr,
+                                seg.filesz,
+                                seg.memsz,
+                                seg.flags
+                            ).ok();
+                        }
+                    }
+                    Err(err) => {
+                        writeln!(writer, "exec parse error: {:?}", err).ok();
+                    }
+                },
+                None => {
+                    writeln!(writer, "file not found: {}", name).ok();
+                }
+            },
+            Command::Empty => {}
+            Command::Unknown(cmd) => {
                 writeln!(writer, "Unknown command: {}", cmd).ok();
             }
         }
     }
+}
+
+enum Command {
+    Help,
+    Clear,
+    Ls,
+    Cat { name: String },
+    Write { name: String, data: String },
+    Rm { name: String },
+    Exec { name: String },
+    Empty,
+    Unknown(String),
+}
+
+fn parse_command(input: &str) -> Command {
+    let mut parts = input.split_whitespace();
+    let cmd = match parts.next() {
+        Some(cmd) => cmd,
+        None => return Command::Empty,
+    };
+
+    match cmd {
+        "help" => Command::Help,
+        "clear" => Command::Clear,
+        "ls" => Command::Ls,
+        "cat" => match parts.next() {
+            Some(name) => Command::Cat { name: name.into() },
+            None => Command::Unknown("cat".into()),
+        },
+        "write" => match (parts.next(), rest_as_string(parts)) {
+            (Some(name), Some(data)) => Command::Write {
+                name: name.into(),
+                data,
+            },
+            _ => Command::Unknown("write".into()),
+        },
+        "rm" => match parts.next() {
+            Some(name) => Command::Rm { name: name.into() },
+            None => Command::Unknown("rm".into()),
+        },
+        "exec" => match parts.next() {
+            Some(name) => Command::Exec { name: name.into() },
+            None => Command::Unknown("exec".into()),
+        },
+        "" => Command::Empty,
+        _ => Command::Unknown(cmd.into()),
+    }
+}
+
+fn rest_as_string<'a>(mut parts: impl Iterator<Item = &'a str>) -> Option<String> {
+    let mut data: Vec<&'a str> = Vec::new();
+    for part in parts {
+        data.push(part);
+    }
+    if data.is_empty() {
+        return None;
+    }
+    let mut out = String::new();
+    for (idx, part) in data.iter().enumerate() {
+        if idx > 0 {
+            out.push(' ');
+        }
+        out.push_str(part);
+    }
+    Some(out)
 }
 
 lazy_static::lazy_static! {
