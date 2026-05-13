@@ -11,6 +11,8 @@ An Operating System Kernel written in Rust (x86_64 architecture).
 - ANSI keyboard input
 - VGA text mode output
 - Basic Shell (work in progress)
+- RAM based file system (work in progress)
+- ELF executable loader (work in progress)
 
 
 https://github.com/user-attachments/assets/7854a5e0-3fd9-4c16-b749-79e4fe84a153
